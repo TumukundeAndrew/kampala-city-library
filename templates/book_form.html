@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+<form method="POST" class="w-75">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class="form-control") }}</div>
+    <div class="mb-3">{{ form.author.label(class="form-label") }}{{ form.author(class="form-control") }}</div>
+    <div class="row">
+        <div class="col">{{ form.isbn.label(class="form-label") }}{{ form.isbn(class="form-control") }}</div>
+        <div class="col">{{ form.year.label(class="form-label") }}{{ form.year(class="form-control") }}</div>
+        <div class="col">{{ form.copies_available.label(class="form-label") }}{{ form.copies_available(class="form-control") }}</div>
+    </div>
+    <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class="form-control") }}</div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+<a href="{{ url_for('books') }}" class="btn btn-secondary">Back</a>
+{% endblock %}
