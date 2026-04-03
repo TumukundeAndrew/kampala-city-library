@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
 # Load environment variables (useful for local development)
-if not os.environ.get('RAILWAY_ENVIRONMENT'):
+
     load_dotenv()
 
 
