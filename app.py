@@ -8,8 +8,9 @@ from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
-# Load environment variables for local development
-load_dotenv()
+# Load .env only for local development, not on Railway
+if not os.environ.get('RAILWAY_ENVIRONMENT'):
+    load_dotenv()
 
 app = Flask(__name__)
 
