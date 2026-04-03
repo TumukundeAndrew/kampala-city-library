@@ -14,15 +14,16 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set. Add it in Railway Variables.")
 
-database_url = os.environ.get('DATABASE_URL')
-if not database_url:
-    raise ValueError("No DATABASE_URL set. Add it in Railway Variables.")
+db_host = os.environ.get('MYSQLHOST')
+db_user = os.environ.get('MYSQLUSER')
+db_password = os.environ.get('MYSQLPASSWORD')
+db_name = os.environ.get('MYSQLDATABASE')
+db_port = os.environ.get('MYSQLPORT', '3306')
 
-# Fix URL scheme for MySQL
-if database_url.startswith('mysql://'):
-    database_url = database_url.replace('mysql://', 'mysql+pymysql://', 1)
+if not all([db_host, db_user, db_password, db_name]):
+    raise ValueError("MySQL variables not set. Add MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE in Railway Variables.")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
