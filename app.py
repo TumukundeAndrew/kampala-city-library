@@ -4,30 +4,39 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, IntegerField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
-from urllib.parse import urlparse
 
+# Load environment variables (useful for local development)
 load_dotenv()
 
 app = Flask(__name__)
 
-# === Secure Environment Configuration (Railway) ===
+# ====================== SECURE ENVIRONMENT CONFIGURATION ======================
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 if not app.config['SECRET_KEY']:
-    raise ValueError("No SECRET_KEY set in environment variables!")
+    raise ValueError("No SECRET_KEY set in environment variables! Please add it in Railway Variables.")
 
-# === Database Configuration (works with Railway Postgres + local SQLite) ===
+# ====================== DATABASE CONFIGURATION (Railway Postgres Fix) ======================
 database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+# Critical fix for Railway PostgreSQL connection string
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    # Optional: Use ?sslmode=require if needed (Railway usually handles it)
+elif os.environ.get('RAILWAY_ENVIRONMENT') or 'RAILWAY' in str(os.environ):
+    # Extra safety: If on Railway but no DATABASE_URL found
+    raise ValueError("DATABASE_URL not found. Make sure you referenced the Postgres service in Railway Variables.")
+
+# Use Railway Postgres if available, otherwise fall back to local SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///library.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# === Flask-Login ===
+# ====================== FLASK-LOGIN ======================
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -36,7 +45,7 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# === Models ===
+# ====================== MODELS ======================
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -52,21 +61,17 @@ class Book(db.Model):
     copies_available = db.Column(db.Integer, default=1)
     description = db.Column(db.Text, nullable=True)
 
-# === Forms (Flask-WTF) ===
-
-# === Forms (Flask-WTF) ===
+# ====================== FORMS ======================
 class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=150)])
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     submit = SubmitField('Register')
 
-
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
-
 
 class BookForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
@@ -77,10 +82,7 @@ class BookForm(FlaskForm):
     description = TextAreaField('Description')
     submit = SubmitField('Save Book')
 
-
-
-
-# === Routes ===
+# ====================== ROUTES ======================
 @app.route('/')
 def home():
     return render_template('base.html')
@@ -123,10 +125,8 @@ def logout():
 @login_required
 def dashboard():
     books = Book.query.all()
-    books_json = [{'title': b.title, 'author': b.author, 'copies_available': b.copies_available} for b in books]
-    return render_template('dashboard.html', books=books, books_json=books_json, user=current_user)
+    return render_template('dashboard.html', books=books, user=current_user)
 
-# === CRUD for Books (Library Catalog) ===
 @app.route('/books')
 @login_required
 def books():
@@ -178,13 +178,14 @@ def delete_book(book_id):
     flash('Book deleted.', 'danger')
     return redirect(url_for('books'))
 
-# Create tables automatically on first request
+# Create tables on first request (good for demo)
 @app.before_request
 def create_tables():
     if not hasattr(app, '_tables_created'):
         db.create_all()
         app._tables_created = True
 
+# ====================== RUN APP ======================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)   # Set debug=False in productiongit
