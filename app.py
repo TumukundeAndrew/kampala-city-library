@@ -178,14 +178,12 @@ def delete_book(book_id):
     flash('Book deleted.', 'danger')
     return redirect(url_for('books'))
 
-# Create tables on first request (good for demo)
-@app.before_request
-def create_tables():
-    if not hasattr(app, '_tables_created'):
-        db.create_all()
-        app._tables_created = True
+# Create tables at startup
+with app.app_context():
+    db.create_all()
+
 
 # ====================== RUN APP ======================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)   # Set debug=False in productiongit
+    app.run(host='0.0.0.0', port=port, debug=False)   # Set debug=False in production
