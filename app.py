@@ -6,10 +6,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash, check_password_hash
-from dotenv import load_dotenv
-
-# Load .env for local development (Railway Variables always take priority)
-load_dotenv(override=False)
 
 app = Flask(__name__)
 
@@ -18,12 +14,15 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set. Add it in Railway Variables.")
 
-# Fix Railway's legacy postgres:// URL scheme
 database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+if not database_url:
+    raise ValueError("No DATABASE_URL set. Add it in Railway Variables.")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///library.db'
+# Fix URL scheme for MySQL
+if database_url.startswith('mysql://'):
+    database_url = database_url.replace('mysql://', 'mysql+pymysql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -170,17 +169,11 @@ def delete_book(book_id):
     flash('Book deleted.', 'danger')
     return redirect(url_for('books'))
 
-# Create tables at startup
+# ====================== CREATE TABLES ======================
 with app.app_context():
-    try:
-        db.create_all()
-        print("SUCCESS: Tables created or already exist.")
-        print("DB URI:", app.config['SQLALCHEMY_DATABASE_URI'][:30])
-    except Exception as e:
-        print("ERROR creating tables:", e)
-
+    db.create_all()
 
 # ====================== RUN APP ======================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)   # Set debug=False in production
+    app.run(host='0.0.0.0', port=port, debug=False)
