@@ -21,6 +21,10 @@ if not app.config['SECRET_KEY']:
 # ====================== DATABASE CONFIGURATION (Railway Postgres Fix) ======================
 database_url = os.environ.get('DATABASE_URL')
 
+database_url = os.environ.get('DATABASE_URL')
+print("DATABASE_URL received:", database_url)  # ← add this line
+
+
 # Critical fix for Railway PostgreSQL connection string
 if database_url:
     if database_url.startswith("postgres://"):
