@@ -7,35 +7,25 @@ from wtforms import StringField, PasswordField, SubmitField, IntegerField, TextA
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# ====================== APP SETUP ======================
 app = Flask(__name__)
 
-# Secret Key
+# ====================== CONFIGURATION ======================
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set. Add it in Railway Variables.")
 
-# ====================== DATABASE CONFIG ======================
-# Prefer DATABASE_URL (PostgreSQL on Railway)
-database_url = os.environ.get('DATABASE_URL')
+db_host = os.environ.get('MYSQLHOST')
+db_user = os.environ.get('MYSQLUSER')
+db_password = os.environ.get('MYSQLPASSWORD')
+db_name = os.environ.get('MYSQLDATABASE')
+db_port = os.environ.get('MYSQLPORT', '3306')
 
-if not database_url:
-    # Fallback to MySQL (ensure env vars are set)
-    db_host = os.environ.get('MYSQLHOST')
-    db_user = os.environ.get('MYSQLUSER')
-    db_password = os.environ.get('MYSQLPASSWORD')
-    db_name = os.environ.get('MYSQLDATABASE')
-    db_port = os.environ.get('MYSQLPORT', '3306')
+if not all([db_host, db_user, db_password, db_name]):
+    raise ValueError("MySQL variables not set. Add MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE in Railway Variables.")
 
-    if not all([db_host, db_user, db_password, db_name]):
-        raise ValueError("Database variables not set. Add MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE in Railway Variables.")
-
-    database_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize DB
 db = SQLAlchemy(app)
 
 # ====================== FLASK-LOGIN ======================
@@ -131,7 +121,7 @@ def dashboard():
 
 @app.route('/books')
 @login_required
-def books_view():
+def books():
     books = Book.query.all()
     return render_template('books.html', books=books)
 
@@ -151,7 +141,7 @@ def new_book():
         db.session.add(book)
         db.session.commit()
         flash('Book added successfully!', 'success')
-        return redirect(url_for('books_view'))
+        return redirect(url_for('books'))
     return render_template('book_form.html', form=form, title='Add New Book')
 
 @app.route('/book/edit/<int:book_id>', methods=['GET', 'POST'])
@@ -168,7 +158,7 @@ def edit_book(book_id):
         book.description = form.description.data
         db.session.commit()
         flash('Book updated!', 'success')
-        return redirect(url_for('books_view'))
+        return redirect(url_for('books'))
     return render_template('book_form.html', form=form, title='Edit Book')
 
 @app.route('/book/delete/<int:book_id>', methods=['POST'])
@@ -178,9 +168,9 @@ def delete_book(book_id):
     db.session.delete(book)
     db.session.commit()
     flash('Book deleted.', 'danger')
-    return redirect(url_for('books_view'))
+    return redirect(url_for('books'))
 
-# ====================== CREATE TABLES ON STARTUP ======================
+# ====================== CREATE TABLES ======================
 with app.app_context():
     db.create_all()
 
