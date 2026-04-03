@@ -17,6 +17,7 @@ app = Flask(__name__)
 
 # ====================== SECURE ENVIRONMENT CONFIGURATION ======================
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+print("SECRET_KEY received:", "SET" if app.config['SECRET_KEY'] else "NOT SET")
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set in environment variables! Please add it in Railway Variables.")
 
