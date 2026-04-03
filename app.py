@@ -4,40 +4,25 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, IntegerField, TextAreaField
-from wtforms.validators import DataRequired, Length
+from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
-# Load environment variables (useful for local development)
-
+# Load environment variables for local development
 load_dotenv()
-
 
 app = Flask(__name__)
 
-# ====================== SECURE ENVIRONMENT CONFIGURATION ======================
+# ====================== CONFIGURATION ======================
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-print("SECRET_KEY received:", "SET" if app.config['SECRET_KEY'] else "NOT SET")
 if not app.config['SECRET_KEY']:
-    raise ValueError("No SECRET_KEY set in environment variables! Please add it in Railway Variables.")
+    raise ValueError("No SECRET_KEY set. Add it in Railway Variables.")
 
-# ====================== DATABASE CONFIGURATION (Railway Postgres Fix) ======================
+# Fix Railway's legacy postgres:// URL scheme
 database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-database_url = os.environ.get('DATABASE_URL')
-print("DATABASE_URL received:", database_url)  # ← add this line
-
-
-# Critical fix for Railway PostgreSQL connection string
-if database_url:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    # Optional: Use ?sslmode=require if needed (Railway usually handles it)
-elif os.environ.get('RAILWAY_ENVIRONMENT') or 'RAILWAY' in str(os.environ):
-    # Extra safety: If on Railway but no DATABASE_URL found
-    raise ValueError("DATABASE_URL not found. Make sure you referenced the Postgres service in Railway Variables.")
-
-# Use Railway Postgres if available, otherwise fall back to local SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///library.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -83,8 +68,8 @@ class LoginForm(FlaskForm):
 class BookForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     author = StringField('Author', validators=[DataRequired()])
-    isbn = StringField('ISBN')
-    year = IntegerField('Year Published')
+    isbn = StringField('ISBN', validators=[Optional()])
+    year = IntegerField('Year Published', validators=[Optional()])
     copies_available = IntegerField('Copies Available', default=1)
     description = TextAreaField('Description')
     submit = SubmitField('Save Book')
@@ -92,7 +77,7 @@ class BookForm(FlaskForm):
 # ====================== ROUTES ======================
 @app.route('/')
 def home():
-    return render_template('base.html')
+    return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

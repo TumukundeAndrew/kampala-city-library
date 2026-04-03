@@ -1,27 +1,74 @@
 {% extends "base.html" %}
+{% block title %}Catalog — Kampala City Library{% endblock %}
+{% block nav_books %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+    .catalog-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-family: 'Merriweather', serif; font-size: 1.4rem; font-weight: 700; color: var(--navy); }
+    .books-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .books-table th { background: var(--navy); color: #fff; padding: 12px 16px; text-align: left; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .books-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text); vertical-align: middle; }
+    .books-table tr:last-child td { border-bottom: none; }
+    .books-table tr:hover td { background: #f8fafc; }
+    .badge-available { background: #dcfce7; color: #166534; padding: 3px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+    .badge-unavailable { background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+    .action-group { display: flex; gap: 6px; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Books Catalog</h2>
-<a href="{{ url_for('new_book') }}" class="btn btn-primary mb-3">+ Add New Book</a>
-<table class="table table-hover">
-    <thead>
-        <tr><th>Title</th><th>Author</th><th>ISBN</th><th>Year</th><th>Copies</th><th>Actions</th></tr>
-    </thead>
-    <tbody>
-        {% for book in books %}
-        <tr>
-            <td>{{ book.title }}</td>
-            <td>{{ book.author }}</td>
-            <td>{{ book.isbn or 'N/A' }}</td>
-            <td>{{ book.year or 'N/A' }}</td>
-            <td>{{ book.copies_available }}</td>
-            <td>
-                <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-warning btn-sm">Edit</a>
-                <form action="{{ url_for('delete_book', book_id=book.id) }}" method="POST" style="display:inline;">
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this book?');">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="page">
+    <div class="catalog-header">
+        <div class="page-title">Book Catalog</div>
+        <a href="{{ url_for('new_book') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Add New Book
+        </a>
+    </div>
+
+    {% if books %}
+    <table class="books-table">
+        <thead>
+            <tr>
+                <th>Title</th><th>Author</th><th>ISBN</th><th>Year</th><th>Copies</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td><strong>{{ book.title }}</strong></td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.isbn or '—' }}</td>
+                <td>{{ book.year or '—' }}</td>
+                <td>
+                    {% if book.copies_available > 0 %}
+                        <span class="badge-available">{{ book.copies_available }} available</span>
+                    {% else %}
+                        <span class="badge-unavailable">Out of stock</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-group">
+                        <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-outline btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <form action="{{ url_for('delete_book', book_id=book.id) }}" method="POST">
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Delete this book?')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center;padding:60px 20px;color:var(--muted);">
+        <i class="bi bi-inbox" style="font-size:3rem;opacity:0.3;display:block;margin-bottom:12px;"></i>
+        <p>No books yet. <a href="{{ url_for('new_book') }}" style="color:var(--mid);font-weight:600;">Add the first one →</a></p>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

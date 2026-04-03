@@ -11,6 +11,7 @@ __pycache__/
 # Database files (local)
 *.db
 library.db
+instance/
 
 # IDE / Editor files
 .vscode/

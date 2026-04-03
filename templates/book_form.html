@@ -1,17 +1,62 @@
 {% extends "base.html" %}
+{% block title %}{{ title }} — Kampala City Library{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-card { max-width: 680px; margin: 0 auto; }
+    .form-card-header { margin-bottom: 1.75rem; }
+    .form-card-header h2 { font-family: 'Merriweather', serif; font-size: 1.4rem; font-weight: 700; color: var(--navy); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    .form-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>{{ title }}</h2>
-<form method="POST" class="w-75">
-    {{ form.hidden_tag() }}
-    <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class="form-control") }}</div>
-    <div class="mb-3">{{ form.author.label(class="form-label") }}{{ form.author(class="form-control") }}</div>
-    <div class="row">
-        <div class="col">{{ form.isbn.label(class="form-label") }}{{ form.isbn(class="form-control") }}</div>
-        <div class="col">{{ form.year.label(class="form-label") }}{{ form.year(class="form-control") }}</div>
-        <div class="col">{{ form.copies_available.label(class="form-label") }}{{ form.copies_available(class="form-control") }}</div>
+<div class="page">
+    <div class="form-card card" style="padding: 2rem;">
+        <div class="form-card-header">
+            <h2>{{ title }}</h2>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control", placeholder="Book title") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.author.label(class="form-label") }}
+                {{ form.author(class="form-control", placeholder="Author name") }}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.isbn.label(class="form-label") }}
+                    {{ form.isbn(class="form-control", placeholder="ISBN") }}
+                </div>
+                <div class="form-group">
+                    {{ form.year.label(class="form-label") }}
+                    {{ form.year(class="form-control", placeholder="e.g. 2023") }}
+                </div>
+                <div class="form-group">
+                    {{ form.copies_available.label(class="form-label") }}
+                    {{ form.copies_available(class="form-control") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", rows=4, placeholder="Short description (optional)") }}
+            </div>
+
+            <div class="form-actions">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('books') }}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
     </div>
-    <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class="form-control") }}</div>
-    {{ form.submit(class="btn btn-primary") }}
-</form>
-<a href="{{ url_for('books') }}" class="btn btn-secondary">Back</a>
+</div>
 {% endblock %}
