@@ -7,3 +7,8 @@ Werkzeug==3.1.7
 SQLAlchemy==2.0.48
 PyMySQL==1.1.1
 gunicorn==25.3.0
+Flask
+Flask-SQLAlchemy
+pymysql
+cryptography
+gunicorn
