@@ -6,6 +6,10 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, IntegerField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+
+# Load .env for local development (Railway Variables always take priority)
+load_dotenv(override=False)
 
 app = Flask(__name__)
 
@@ -14,13 +18,12 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 if not app.config['SECRET_KEY']:
     raise ValueError("No SECRET_KEY set. Add it in Railway Variables.")
 
+# Fix Railway's legacy postgres:// URL scheme
 database_url = os.environ.get('DATABASE_URL')
-if not database_url:
-    raise ValueError("No DATABASE_URL set. Add it in Railway Variables.")
-if database_url.startswith('postgres://'):
+if database_url and database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///library.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
