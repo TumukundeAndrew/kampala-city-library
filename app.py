@@ -172,7 +172,12 @@ def delete_book(book_id):
 
 # Create tables at startup
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        print("SUCCESS: Tables created or already exist.")
+        print("DB URI:", app.config['SQLALCHEMY_DATABASE_URI'][:30])
+    except Exception as e:
+        print("ERROR creating tables:", e)
 
 
 # ====================== RUN APP ======================
